@@ -293,14 +293,14 @@ namespace Tetris
                 _isGameOver = false;
             }
             if(!_timer.IsEnabled)
-             {
-               if (!_gameActive) { scoreTxt.Text = "0"; _leftPos = 3; AddShape(_currentShapeNumber,_leftPos); }
-               nextTxt.Visibility = levelTxt.Visibility = Visibility.Visible;
-               levelTxt.Text = "Level: " + _gameLevel;
-               _timer.Start();
-               startStopBtn.Content = "Stop Game";
-               _gameActive = true;
-             }
+            {
+                if (!_gameActive) { scoreTxt.Text = "0"; _leftPos = 3; AddShape(_currentShapeNumber,_leftPos); }
+                nextTxt.Visibility = levelTxt.Visibility = Visibility.Visible;
+                levelTxt.Text = "Level: " + _gameLevel;
+                _timer.Start();
+                startStopBtn.Content = "Stop Game";
+                _gameActive = true;
+            }
             else
             {
                 _timer.Stop();
