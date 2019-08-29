@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Tetris"
         xmlns:Properties="clr-namespace:Tetris.Properties" x:Class="Tetris.MainWindow"
         mc:Ignorable="d"
-        Title="Tetris" Height="463" Width="467" HorizontalAlignment="Left" VerticalAlignment="Top" ResizeMode="CanMinimize">
+        Title="Tetris" Height="798.462" Width="473.184" HorizontalAlignment="Left" VerticalAlignment="Top" ResizeMode="CanMinimize">
     <Window.Background>
         <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
             <GradientStop Color="#FF001346" Offset="0"/>
@@ -15,8 +15,18 @@
     </Window.Background>
     <Grid x:Name="grid" Margin="0,0,0,1">
 
-        <Grid x:Name="tetrisGrid" Margin="28,17,0,0" Panel.ZIndex="2" Height="400" Width="250" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Black">
+        <Grid x:Name="tetrisGrid" Margin="28,27,0,0" Panel.ZIndex="2" Height="663.259" Width="250" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Black">
             <Grid.RowDefinitions>
+                <RowDefinition Height="25"/>
+                <RowDefinition Height="25"/>
+                <RowDefinition Height="25"/>
+                <RowDefinition Height="25"/>
+                <RowDefinition Height="25"/>
+                <RowDefinition Height="25"/>
+                <RowDefinition Height="25"/>
+                <RowDefinition Height="25"/>
+                <RowDefinition Height="25"/>
+                <RowDefinition Height="25"/>
                 <RowDefinition Height="25"/>
                 <RowDefinition Height="25"/>
                 <RowDefinition Height="25"/>
@@ -49,7 +59,7 @@
 
         </Grid>
         <Button x:Name="startStopBtn" Content="Start Game" HorizontalAlignment="Left" Margin="341,369,0,0" VerticalAlignment="Top" Width="93"  Click="Button_Click_1" Height="50"/>
-        <Rectangle x:Name="back" HorizontalAlignment="Left" Height="405" Margin="26,15,0,0" VerticalAlignment="Top" Width="254" Fill="White"/>
+        <Rectangle x:Name="back" HorizontalAlignment="Left" Height="683.264" Margin="26,15,0,0" VerticalAlignment="Top" Width="254" Fill="White"/>
         <Canvas x:Name="nextShapeCanvas" HorizontalAlignment="Left" Height="75" Margin="344,94,0,0" VerticalAlignment="Top" Width="100"/>
         <Label x:Name="nextTxt" Content="NEXT" HorizontalAlignment="Left" Margin="284,93,0,0" VerticalAlignment="Top" Foreground="White" FontSize="18" FontWeight="Bold" FontFamily="Showcard Gothic" Background="{x:Null}"/>
         <TextBlock x:Name="GameOverTxt" HorizontalAlignment="Left" Margin="304,240,0,0" TextWrapping="Wrap" Text="Game Over" VerticalAlignment="Top" Foreground="Red" TextAlignment="Center" FontFamily="Showcard Gothic" Height="88" Width="145" FontSize="36">

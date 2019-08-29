@@ -4,12 +4,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Media;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+
 namespace Tetris
 {
     /// <summary>
@@ -19,253 +21,262 @@ namespace Tetris
 
     public partial class MainWindow : Window
     {
-        private const int GAMESPEED = 700;// millisecond
+        private const int Gamespeed = 700;// millisecond
+
         // List for add 2 sound wav
-        List<System.Media.SoundPlayer> soundList=new List<System.Media.SoundPlayer>();
-        DispatcherTimer timer;
-        Random shapeRandom;
-        private int rowCount = 0;
-        private int columnCount = 0;
-        private int leftPos = 0;
-        private int downPos = 0;
-        private int currentTetrominoWidth;
-        private int currentTetrominoHeigth;
-        private int currentShapeNumber;
-        private int nextShapeNumber;
-        private int tetrisGridColumn;
-        private int tetrisGridRow;
-        private int rotation = 0;
-        private bool gameActive = false;
-        private bool nextShapeDrawed = false;
-        private int[,] currentTetromino = null;
-        private bool isRotated = false;
-        private bool bottomCollided = false;
-        private bool leftCollided = false;
-        private bool rightCollided = false;
-        private bool isGameOver = false;
-        private int gameSpeed;
-        private int levelScale = 60;// every 60 second increase level by 1 until 10
-        private double gameSpeedCounter=0;
-        private int gameLevel=1;
-        private int gameScore = 0;
-        private static Color O_TetrominoColor = Colors.GreenYellow;
-        private static Color I_TetrominoColor = Colors.Red;
-        private static Color T_TetrominoColor = Colors.Gold;
-        private static Color S_TetrominoColor = Colors.Violet;
-        private static Color Z_TetrominoColor = Colors.DeepSkyBlue;
-        private static Color J_TetrominoColor = Colors.Cyan;
-        private static Color L_TetrominoColor = Colors.LightSeaGreen;
-        List<int> currentTetrominoRow = null;
-        List<int> currentTetrominoColumn = null;
+        readonly List<SoundPlayer> _soundList=new List<SoundPlayer>();
+
+        readonly DispatcherTimer _timer;
+        Random _shapeRandom;
+        private int _rowCount;
+        private int _columnCount;
+        private int _leftPos;
+        private int _downPos;
+        private int _currentShapeWidth;
+        private int _currentShapeHeigth;
+        private int _currentShapeNumber;
+        private int _nextShapeNumber;
+        private readonly int _tetrisGridColumn;
+        private readonly int _tetrisGridRow;
+        private int _rotation;
+        private bool _gameActive;
+        private bool _nextShapeDrawed;
+        private int[,] _currentShape;
+        private bool _isRotated;
+        private bool _bottomCollided;
+        private bool _leftCollided;
+        private bool _rightCollided;
+        private bool _isGameOver;
+        private int _gameSpeed;
+        private readonly int _levelScale = 60;// every 60 second increase level by 1 until 10
+        private double _gameSpeedCounter;
+        private int _gameLevel=1;
+        private int _gameScore;
+
+        private static readonly Color OShapeColor = Colors.GreenYellow;
+        private static readonly Color IShapeColor = Colors.Red;
+        private static readonly Color TShapeColor = Colors.Gold;
+        private static readonly Color SShapeColor = Colors.Violet;
+        private static readonly Color ZShapeColor = Colors.DeepSkyBlue;
+        private static readonly Color JShapeColor = Colors.Cyan;
+        private static readonly Color LShapeColor = Colors.LightSeaGreen;
+        List<int> _currentShapeRow;
+        List<int> _currentShapeColumn;
 
         
-        // Color for shape tetromino
-        Color[] shapeColor = {  O_TetrominoColor,I_TetrominoColor,
-                                T_TetrominoColor,S_TetrominoColor,
-                                Z_TetrominoColor,J_TetrominoColor,
-                                L_TetrominoColor
+        // Color for shape Shape
+        readonly Color[] _shapeColor = {  OShapeColor,IShapeColor,
+                                TShapeColor,SShapeColor,
+                                ZShapeColor,JShapeColor,
+                                LShapeColor
                              };
         // ---------
-        string[] arrayTetrominos = { "","O_Tetromino" , "I_Tetromino_0",
-                                        "T_Tetromino_0","S_Tetromino_0",
-                                        "Z_Tetromino_0","J_Tetromino_0",
-                                        "L_Tetromino_0"
+        readonly string[] _arrayShapes = { "","OShape" , "IShape0",
+                                        "TShape0","SShape0",
+                                        "ZShape0","JShape0",
+                                        "LShape0"
                                    };
 
-        #region Array of tetrominos shape 
+        #region Array of Shapes shape 
 
-        // arrays of tetromino shape
-        //---- O Tetromino------------
-        public int[,] O_Tetromino = new int[2, 2] { { 1, 1 },  // * *
+        // arrays of Shape shape
+        //---- O Shape------------
+        public int[,] OShape = new int[2, 2] { { 1, 1 },  // * *
                                                     { 1, 1 }}; // * *
 
-        //---- I Tetromino------------
-        public int[,] I_Tetromino_0 = new int[2, 4] { { 1, 1, 1, 1 }, { 0, 0, 0, 0 } };// * * * *
+        //---- I Shape------------
+        public int[,] IShape0 = new int[2, 4] { { 1, 1, 1, 1 }, { 0, 0, 0, 0 } };// * * * *
 
-        public int[,] I_Tetromino_90 = new int[4, 2] {{ 1,0 },   // *  
+        public int[,] IShape90 = new int[4, 2] {{ 1,0 },   // *  
                                                        { 1,0 },  // *
                                                        { 1,0 },  // *
                                                        { 1,0 }}; // *
-        //---- T Tetromino------------
-        public int[,] T_Tetromino_0 = new int[2, 3] {{0,1,0},    //    * 
+        //---- T Shape------------
+        public int[,] TShape0 = new int[2, 3] {{0,1,0},    //    * 
                                                      {1,1,1}};   //  * * *
 
-        public int[,] T_Tetromino_90 = new int[3, 2] {{1,0},     //  * 
+        public int[,] TShape90 = new int[3, 2] {{1,0},     //  * 
                                                       {1,1},     //  * *
                                                       {1,0}};    //  *  
 
-        public int[,] T_Tetromino_180 = new int[2, 3] {{1,1,1},  // * * *
+        public int[,] TShape180 = new int[2, 3] {{1,1,1},  // * * *
                                                        {0,1,0}}; //   * 
 
-        public int[,] T_Tetromino_270 = new int[3, 2] {{0,1},    //   * 
+        public int[,] TShape270 = new int[3, 2] {{0,1},    //   * 
                                                        {1,1},    // * *
                                                        {0,1}};   //   *  
-        //---- S Tetromino------------
-        public int[,] S_Tetromino_0 = new int[2, 3] {{0,1,1},    //   * *
+        //---- S Shape------------
+        public int[,] SShape0 = new int[2, 3] {{0,1,1},    //   * *
                                                      {1,1,0}};   // * *
 
-        public int[,] S_Tetromino_90 = new int[3, 2] {{1,0},     // *
+        public int[,] SShape90 = new int[3, 2] {{1,0},     // *
                                                       {1,1},     // * *
                                                       {0,1}};    //   *
-        //---- Z Tetromino------------
-        public int[,] Z_Tetromino_0 = new int[2, 3] {{1,1,0},    // * *
+        //---- Z Shape------------
+        public int[,] ZShape0 = new int[2, 3] {{1,1,0},    // * *
                                                      {0,1,1}};   //   * *
 
-        public int[,] Z_Tetromino_90 = new int[3, 2] {{0,1},     //   *
+        public int[,] ZShape90 = new int[3, 2] {{0,1},     //   *
                                                       {1,1},     // * *
                                                       {1,0}};    // *
-        //---- J Tetromino------------
-        public int[,] J_Tetromino_0 = new int[2, 3] {{1,0,0},    // * 
+        //---- J Shape------------
+        public int[,] JShape0 = new int[2, 3] {{1,0,0},    // * 
                                                      {1,1,1}};   // * * *
 
-        public int[,] J_Tetromino_90 = new int[3, 2] {{1,1},     // * * 
+        public int[,] JShape90 = new int[3, 2] {{1,1},     // * * 
                                                       {1,0},     // *
                                                       {1,0}};    // * 
 
-        public int[,] J_Tetromino_180 = new int[2, 3] {{1,1,1},  // * * * 
+        public int[,] JShape180 = new int[2, 3] {{1,1,1},  // * * * 
                                                        {0,0,1}}; //     *
 
-        public int[,] J_Tetromino_270 = new int[3, 2] {{0,1},    //   * 
+        public int[,] JShape270 = new int[3, 2] {{0,1},    //   * 
                                                        {0,1},    //   *
                                                        {1,1 }};  // * *
 
-        //---- L Tetromino------------
-        public int[,] L_Tetromino_0 = new int[2, 3] {{0,0,1},    //     * 
+        //---- L Shape------------
+        public int[,] LShape0 = new int[2, 3] {{0,0,1},    //     * 
                                                      {1,1,1}};   // * * *
 
-        public int[,] L_Tetromino_90 = new int[3, 2] {{1,0},     // *  
+        public int[,] LShape90 = new int[3, 2] {{1,0},     // *  
                                                       {1,0},     // *
                                                       {1,1}};    // * *
 
-        public int[,] L_Tetromino_180 = new int[2, 3] {{1,1,1},  // * * * 
+        public int[,] LShape180 = new int[2, 3] {{1,1,1},  // * * * 
                                                        {1,0,0}}; // *
 
-        public int[,] L_Tetromino_270 = new int[3, 2] {{1,1},    // * * 
+        public int[,] LShape270 = new int[3, 2] {{1,1},    // * * 
                                                        {0,1},    //   *
                                                        {0,1 }};  //   *
 
-        public object Task { get; private set; }
         #endregion
 
         public MainWindow()
         {
             InitializeComponent();
-            gameSpeed = GAMESPEED;    
+            _gameSpeed = Gamespeed;  
+            
             //created event for key press
             KeyDown += MainWindow_KeyDown;
+
             // init timer
-            timer = new DispatcherTimer();
-            timer.Interval = new TimeSpan(0, 0, 0, 0, gameSpeed); // 700 millisecond
-            timer.Tick += Timer_Tick;
-            tetrisGridColumn = tetrisGrid.ColumnDefinitions.Count;
-            tetrisGridRow = tetrisGrid.RowDefinitions.Count;
-            shapeRandom = new Random();
-            currentShapeNumber = shapeRandom.Next(1, 8);
-            nextShapeNumber = shapeRandom.Next(1, 8);
+            _timer = new DispatcherTimer
+            {
+                Interval = new TimeSpan(0, 0, 0, 0, _gameSpeed)
+            };
+
+            // 700 millisecond
+            _timer.Tick += Timer_Tick;
+            _tetrisGridColumn = tetrisGrid.ColumnDefinitions.Count;
+            _tetrisGridRow = tetrisGrid.RowDefinitions.Count;
+            _shapeRandom = new Random();
+            _currentShapeNumber = _shapeRandom.Next(1, 8);
+            _nextShapeNumber = _shapeRandom.Next(1, 8);
             nextTxt.Visibility = levelTxt.Visibility= GameOverTxt.Visibility = Visibility.Collapsed;
+
             // Add the 2 wav sound in list
-            soundList.Add(new System.Media.SoundPlayer(Properties.Resources.collided));
-            soundList.Add(new System.Media.SoundPlayer(Properties.Resources.deleteLine));
+            _soundList.Add(new SoundPlayer(Properties.Resources.collided));
+            _soundList.Add(new SoundPlayer(Properties.Resources.deleteLine));
         }
             
         // Key event method for moving shape down,rigth,left and rotation
         private void MainWindow_KeyDown(object sender, KeyEventArgs e)
         {
             
-            if (!timer.IsEnabled) { return; }
+            if (!_timer.IsEnabled) { return; }
             switch (e.Key.ToString())
             {
                 case "Up":
-                    rotation += 90;
-                    if (rotation > 270) { rotation = 0; }
-                    shapeRotation(rotation);
+                    _rotation += 90;
+                    if (_rotation > 270) { _rotation = 0; }
+                    ShapeRotation(_rotation);
                     break;
                 case "Down":
-                    downPos++;
+                    _downPos++;
                     break;
                 case "Right":
                     // Check if collided
                     TetroCollided(); 
-                    if (!rightCollided) { leftPos++; }
-                    rightCollided = false;
+                    if (!_rightCollided) { _leftPos++; }
+                    _rightCollided = false;
                     break;
                 case "Left":
                     // Check if collided
                     TetroCollided(); 
-                    if (!leftCollided) { leftPos--;}
-                    leftCollided = false;
+                    if (!_leftCollided) { _leftPos--;}
+                    _leftCollided = false;
                     break;
             }
-            moveShape();
+            MoveShape();
         }
 
-        // Rotation tetrominos 
-        private void shapeRotation(int _rotation)
+        // Rotation Shapes 
+        private void ShapeRotation(int rotation)
         {
             // Check if collided
-            if (rotationCollided(rotation))
+            if (RotationCollided(_rotation))
             {
-                rotation -= 90;
+                _rotation -= 90;
                 return;
             }
 
-            if (arrayTetrominos[currentShapeNumber].IndexOf("I_") == 0)
+            if (_arrayShapes[_currentShapeNumber].IndexOf("I", StringComparison.Ordinal) == 0)
             {              
-                if (_rotation > 90) { _rotation = rotation = 0; }
-                currentTetromino = getVariableByString("I_Tetromino_" + _rotation);
+                if (rotation > 90) { rotation = _rotation = 0; }
+                _currentShape = GetVariableByString("IShape" + rotation);
             }
-            else if (arrayTetrominos[currentShapeNumber].IndexOf("T_") == 0)
+            else if (_arrayShapes[_currentShapeNumber].IndexOf("T", StringComparison.Ordinal) == 0)
             {
-                currentTetromino = getVariableByString("T_Tetromino_" + _rotation);
+                _currentShape = GetVariableByString("TShape" + rotation);
             }
-            else if (arrayTetrominos[currentShapeNumber].IndexOf("S_") == 0)
+            else if (_arrayShapes[_currentShapeNumber].IndexOf("S", StringComparison.Ordinal) == 0)
             {
-                if (_rotation > 90) { _rotation = rotation = 0; }
-                currentTetromino = getVariableByString("S_Tetromino_" + _rotation);
+                if (rotation > 90) { rotation = _rotation = 0; }
+                _currentShape = GetVariableByString("SShape" + rotation);
             }
-            else if (arrayTetrominos[currentShapeNumber].IndexOf("Z_") == 0)
+            else if (_arrayShapes[_currentShapeNumber].IndexOf("Z", StringComparison.Ordinal) == 0)
             {
-                if (_rotation > 90) { _rotation = rotation = 0; }
-                currentTetromino = getVariableByString("Z_Tetromino_" + _rotation);
+                if (rotation > 90) { rotation = _rotation = 0; }
+                _currentShape = GetVariableByString("ZShape" + rotation);
             }
-            else if (arrayTetrominos[currentShapeNumber].IndexOf("J_") == 0)
+            else if (_arrayShapes[_currentShapeNumber].IndexOf("J", StringComparison.Ordinal) == 0)
             {
-                currentTetromino = getVariableByString("J_Tetromino_" + _rotation);
+                _currentShape = GetVariableByString("JShape" + rotation);
             }
-            else if (arrayTetrominos[currentShapeNumber].IndexOf("L_") == 0)
+            else if (_arrayShapes[_currentShapeNumber].IndexOf("L", StringComparison.Ordinal) == 0)
             {
-                currentTetromino = getVariableByString("L_Tetromino_" + _rotation);
+                _currentShape = GetVariableByString("LShape" + rotation);
             }
-            else if (arrayTetrominos[currentShapeNumber].IndexOf("O_") == 0) // Do not rotate this
+            else if (_arrayShapes[_currentShapeNumber].IndexOf("O", StringComparison.Ordinal) == 0) // Do not rotate this
             {
                 return;
             }
            
-            isRotated = true;
-            addShape(currentShapeNumber, leftPos, downPos);
+            _isRotated = true;
+            AddShape(_currentShapeNumber, _leftPos, _downPos);
         }
 
        
         // Timer tick method for moving shape down
         private void Timer_Tick(object sender, EventArgs e)
         {
-            downPos++;
-            moveShape();
-            if (gameSpeedCounter >= levelScale)
+            _downPos++;
+            MoveShape();
+            if (_gameSpeedCounter >= _levelScale)
             {          
-                if (gameSpeed >= 50)
+                if (_gameSpeed >= 50)
                 {
-                    gameSpeed -= 50;
-                    gameLevel++;
-                    levelTxt.Text = "Level: " + gameLevel.ToString();
+                    _gameSpeed -= 50;
+                    _gameLevel++;
+                    levelTxt.Text = "Level: " + _gameLevel;
                 }
-                else { gameSpeed = 50; }
-                timer.Stop();
-                timer.Interval = new TimeSpan(0, 0, 0, 0, gameSpeed);
-                timer.Start();
-                gameSpeedCounter = 0;
+                else { _gameSpeed = 50; }
+                _timer.Stop();
+                _timer.Interval = new TimeSpan(0, 0, 0, 0, _gameSpeed);
+                _timer.Start();
+                _gameSpeedCounter = 0;
             }
-            gameSpeedCounter += (gameSpeed/1000f);
+            _gameSpeedCounter += (_gameSpeed/1000f);
           
         }
 
@@ -274,142 +285,145 @@ namespace Tetris
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
           
-            if(isGameOver)
+            if(_isGameOver)
             {
                 tetrisGrid.Children.Clear();
                 nextShapeCanvas.Children.Clear();
                 GameOverTxt.Visibility = Visibility.Collapsed;
-                isGameOver = false;
+                _isGameOver = false;
             }
-            if(!timer.IsEnabled)
+            if(!_timer.IsEnabled)
              {
-               if (!gameActive) { scoreTxt.Text = "0"; leftPos = 3; addShape(currentShapeNumber,leftPos); }
+               if (!_gameActive) { scoreTxt.Text = "0"; _leftPos = 3; AddShape(_currentShapeNumber,_leftPos); }
                nextTxt.Visibility = levelTxt.Visibility = Visibility.Visible;
-               levelTxt.Text = "Level: " + gameLevel.ToString();
-               timer.Start();
+               levelTxt.Text = "Level: " + _gameLevel;
+               _timer.Start();
                startStopBtn.Content = "Stop Game";
-               gameActive = true;
+               _gameActive = true;
              }
             else
             {
-                timer.Stop();
+                _timer.Stop();
                 startStopBtn.Content = "Start Game";
             }
         }
                       
-        // Add new shape tetromino in grid
-        private void addShape(int shapeNumber,int _left=0,int _down=0)
+        // Add new shape Shape in grid
+        private void AddShape(int shapeNumber,int left=0,int down=0)
         {           
-            // Remove previous position of tetromino
-            removeShape();
-            currentTetrominoRow = new List<int>();
-            currentTetrominoColumn = new List<int>();
-            Rectangle square=null;
-            if (!isRotated)
+            // Remove previous position of Shape
+            RemoveShape();
+            _currentShapeRow = new List<int>();
+            _currentShapeColumn = new List<int>();
+            if (!_isRotated)
             {
-                currentTetromino = null;
-                currentTetromino = getVariableByString(arrayTetrominos[shapeNumber].ToString() );
+                _currentShape = null;
+                _currentShape = GetVariableByString(_arrayShapes[shapeNumber] );
             }
-            int firstDim = currentTetromino.GetLength(0);
-            int secondDim = currentTetromino.GetLength(1);
-            currentTetrominoWidth = secondDim;
-            currentTetrominoHeigth = firstDim;
-            // This is only for I Tetromino
-            if (currentTetromino == I_Tetromino_90)
+            var firstDim = _currentShape.GetLength(0);
+            var secondDim = _currentShape.GetLength(1);
+            _currentShapeWidth = secondDim;
+            _currentShapeHeigth = firstDim;
+
+            // This is only for I Shape
+            if (_currentShape == IShape90)
             {
-             currentTetrominoWidth = 1;
+             _currentShapeWidth = 1;
             }
-            else if (currentTetromino == I_Tetromino_0) { currentTetrominoHeigth = 1; }
+            else if (_currentShape == IShape0) { _currentShapeHeigth = 1; }
             //------------------------------------
-            for (int row=0;row < firstDim;row++)
+            for (var row=0;row < firstDim;row++)
             {
-                for (int column=0; column < secondDim; column++)
+                for (var column=0; column < secondDim; column++)
                 {
-                    int bit = currentTetromino[row, column];
+                    var bit = _currentShape[row, column];
                     if (bit == 1 )
                     {
-                        square = getBasicSquare(shapeColor[shapeNumber - 1]);
+                        var square=GetBasicSquare(_shapeColor[shapeNumber - 1]);
                         tetrisGrid.Children.Add(square);
                         square.Name = "moving_" + Grid.GetRow(square)+"_"+Grid.GetColumn(square);
-                        if ( _down >= tetrisGrid.RowDefinitions.Count- currentTetrominoHeigth)
+                        if ( down >= tetrisGrid.RowDefinitions.Count- _currentShapeHeigth)
                         {
-                           _down = tetrisGrid.RowDefinitions.Count - currentTetrominoHeigth;
+                           down = tetrisGrid.RowDefinitions.Count - _currentShapeHeigth;
                         }
-                         Grid.SetRow(square, rowCount + _down);
-                         Grid.SetColumn(square, columnCount + _left);
-                         currentTetrominoRow.Add(rowCount + _down);
-                         currentTetrominoColumn.Add(columnCount + _left);
+                        Grid.SetRow(square, _rowCount + down);
+                        Grid.SetColumn(square, _columnCount + left);
+                        _currentShapeRow.Add(_rowCount + down);
+                        _currentShapeColumn.Add(_columnCount + left);
                      
                     }
-                    columnCount++;
+                    _columnCount++;
                 }
-                columnCount = 0;
-                rowCount++;
-             }
-            columnCount = 0;
-            rowCount = 0;
-            if (!nextShapeDrawed)
+                _columnCount = 0;
+                _rowCount++;
+            }
+            _columnCount = 0;
+            _rowCount = 0;
+            if (!_nextShapeDrawed)
             {
-                drawNextShape(nextShapeNumber);
+                DrawNextShape(_nextShapeNumber);
             }
         }
 
         // Add new shape in new location
-        private void moveShape()
+        private void MoveShape()
         {
-            leftCollided = false;
-            rightCollided = false;
+            _leftCollided = false;
+            _rightCollided = false;
 
             // Check if collided
             TetroCollided(); 
-            if (leftPos > (tetrisGridColumn - currentTetrominoWidth))
+            if (_leftPos > (_tetrisGridColumn - _currentShapeWidth))
             {
-                leftPos = (tetrisGridColumn - currentTetrominoWidth);             
+                _leftPos = (_tetrisGridColumn - _currentShapeWidth);             
             }
-            else if (leftPos < 0) { leftPos = 0; }
+            else if (_leftPos < 0) { _leftPos = 0; }
 
-            if (bottomCollided) 
+            if (_bottomCollided) 
             {           
-                shapeStoped();
+                ShapeStop();
                 return;
             }
-            addShape(currentShapeNumber, leftPos, downPos);
+            AddShape(_currentShapeNumber, _leftPos, _downPos);
         }
 
-        // Check collided if rotated tetromino 
-        private bool rotationCollided(int _rotation)
+        // Check collided if rotated Shape 
+        private bool RotationCollided(int rotation)
         {
-           if (   checkCollided(0, currentTetrominoWidth - 1))   { return true; }//Bottom collision 
-           else if (checkCollided(0, - (currentTetrominoWidth - 1)) ) { return true; }// Top collision
-           else if (checkCollided(0, -1)) { return true; }// Top collision
-           else if (checkCollided(-1, currentTetrominoWidth - 1)){ return true; }// Left collision
-           else if (checkCollided(1, currentTetrominoWidth - 1)) { return true; }// Right collision
+           if (   CheckCollided(0, _currentShapeWidth - 1))   { return true; }//Bottom collision 
+
+           if (CheckCollided(0, - (_currentShapeWidth - 1)) ) { return true; }// Top collision
+
+           if (CheckCollided(0, -1)) { return true; }// Top collision
+
+           if (CheckCollided(-1, _currentShapeWidth - 1)){ return true; }// Left collision
+
+           if (CheckCollided(1, _currentShapeWidth - 1)) { return true; }// Right collision
            return false;
         }
         
         // Check if collided in sides , bottom and other shapes 
         private void TetroCollided()
         {
-            bottomCollided = checkCollided(0, 1);
-            leftCollided = checkCollided(-1, 0);
-            rightCollided = checkCollided(1, 0);
+            _bottomCollided = CheckCollided(0, 1);
+            _leftCollided = CheckCollided(-1, 0);
+            _rightCollided = CheckCollided(1, 0);
         }
 
         //Check collided
-        private bool checkCollided(int _leftRightOffset, int _bottomOffset)
+        private bool CheckCollided(int leftRightOffset, int bottomOffset)
         {
-            Rectangle movingSquare;
-            int squareRow = 0;
-            int squareColumn = 0;
-            for (int i = 0; i <= 3; i++)
+            var squareRow = 0;
+            var squareColumn = 0;
+            for (var i = 0; i <= 3; i++)
             {
-                squareRow = currentTetrominoRow[i];
-                squareColumn = currentTetrominoColumn[i];
+                squareRow = _currentShapeRow[i];
+                squareColumn = _currentShapeColumn[i];
                 try
                 {
-                    movingSquare = (Rectangle)tetrisGrid.Children
-                    .Cast<UIElement>()
-                    .FirstOrDefault(e => Grid.GetRow(e) == squareRow + _bottomOffset && Grid.GetColumn(e) == squareColumn+_leftRightOffset);
+                    var movingSquare = (Rectangle)tetrisGrid.Children
+                        .Cast<UIElement>()
+                        .FirstOrDefault(e => Grid.GetRow(e) == squareRow + bottomOffset && Grid.GetColumn(e) == squareColumn+leftRightOffset);
                     if (movingSquare != null)
                     {
                         if (movingSquare.Name.IndexOf("arrived") == 0)
@@ -418,31 +432,31 @@ namespace Tetris
                         }
                     }
                 }
-                catch { }
+                catch (Exception)
+                {
+                    // ignored
+                }
             }
-            if(downPos > (tetrisGridRow - currentTetrominoHeigth)) { return true; }
-            return false;
+            return _downPos > (_tetrisGridRow - _currentShapeHeigth);
         }
        
-        // Draw next shape tetromino in nextShapeCanvas 
-        private void drawNextShape(int shapeNumber)
+        // Draw next shape Shape in nextShapeCanvas 
+        private void DrawNextShape(int shapeNumber)
         {
             nextShapeCanvas.Children.Clear();
-            int[,] nextShapeTetromino = null;
-            nextShapeTetromino = getVariableByString(arrayTetrominos[shapeNumber]);
-            int firstDim = nextShapeTetromino.GetLength(0);
-            int secondDim = nextShapeTetromino.GetLength(1);
-            int x = 0;
-            int y = 0;
-            Rectangle square;
-            for (int row = 0; row < firstDim; row++)
+            var nextShapeShape = GetVariableByString(_arrayShapes[shapeNumber]);
+            var firstDim = nextShapeShape.GetLength(0);
+            var secondDim = nextShapeShape.GetLength(1);
+            var x = 0;
+            var y = 0;
+            for (var row = 0; row < firstDim; row++)
             {                
-                for (int column = 0; column < secondDim; column++)
+                for (var column = 0; column < secondDim; column++)
                 {
-                    int bit = nextShapeTetromino[row, column];
+                    var bit = nextShapeShape[row, column];
                     if (bit == 1)
                     {
-                        square = getBasicSquare(shapeColor[shapeNumber-1]);
+                        var square = GetBasicSquare(_shapeColor[shapeNumber-1]);
                         nextShapeCanvas.Children.Add(square);
                         Canvas.SetLeft(square, x);
                         Canvas.SetTop(square, y);
@@ -452,166 +466,160 @@ namespace Tetris
                 x = 0;
                 y += 25;    
             }
-            nextShapeDrawed = true;
+            _nextShapeDrawed = true;
         }
 
 
         // This method called when shape it arrives at the bottom or collided
-       private void shapeStoped()
+       private void ShapeStop()
        {
-           timer.Stop();
-            playSound(0);
+           _timer.Stop();
+            PlaySound(0);
             // Game over condition
-            if (downPos <= 2)
+            if (_downPos <= 2)
             {                          
-               gameOver();
+               GameOver();
                return;
             }
             
-            int index = 0;
+            var index = 0;
             while (index < tetrisGrid.Children.Count)
             {
-                UIElement element = tetrisGrid.Children[index];
-                if (element is Rectangle)
+                var element = tetrisGrid.Children[index];
+                if (element is Rectangle square)
                 {
-                    Rectangle square = (Rectangle)element;
-                    if (square.Name.IndexOf("moving_") == 0)
+                    if (square.Name.IndexOf("moving_", StringComparison.Ordinal) == 0)
                     {
-                        // Replace the name of squares arrived tetromino
-                        string newName= square.Name.Replace("moving_", "arrived_");
+                        // Replace the name of squares arrived Shape
+                        var newName= square.Name.Replace("moving_", "arrived_");
                         square.Name=newName;
                     }
                 }
                 index++;
             }
             // Check if line  is complete  and descend down the other shapes
-            checkComplete();
-            reset();
-            timer.Start();
+            CheckComplete();
+            Reset();
+            _timer.Start();
          
         }
         // Method for check if complete line
-        private void checkComplete()
+        private void CheckComplete()
         {
-            int gridRow = tetrisGrid.RowDefinitions.Count;
-            int gridColumn = tetrisGrid.ColumnDefinitions.Count;
-            int squareCount = 0;
-            for (int row = gridRow; row >= 0; row--)
+            var gridRow = tetrisGrid.RowDefinitions.Count;
+            var gridColumn = tetrisGrid.ColumnDefinitions.Count;
+            for (var row = gridRow; row >= 0; row--)
             {
-                squareCount = 0;
-                for (int column = gridColumn; column >= 0; column--)
+                var squareCount = 0;
+                for (var column = gridColumn; column >= 0; column--)
                 {
-                    Rectangle square;
-                    square = (Rectangle) tetrisGrid.Children
-                   .Cast<UIElement>()
-                   .FirstOrDefault(e => Grid.GetRow(e) == row && Grid.GetColumn(e) == column);
-                    if (square != null)
+                    var square = (Rectangle) tetrisGrid.Children
+                        .Cast<UIElement>()
+                        .FirstOrDefault(e => Grid.GetRow(e) == row && Grid.GetColumn(e) == column);
+                    if (square == null) continue;
+                    if (square.Name.IndexOf("arrived", StringComparison.Ordinal) == 0)
                     {
-                        if (square.Name.IndexOf("arrived") == 0)
-                        {
-                           squareCount++;
-                        }
+                        squareCount++;
                     }
                 }
 
                 // If squareCount == gridColumn this means tha the line is completed and must to be delete
-                if (squareCount == gridColumn)
-                {
-                    playSound(1);
-                    deleteLine(row);
-                    scoreTxt.Text = getScore().ToString();
-                    checkComplete();
-                }
+                if (squareCount != gridColumn) continue;
+
+                PlaySound(1);
+                DeleteLine(row);
+                scoreTxt.Text = AddScore().ToString();
+                CheckComplete();
             }
         }
        
         // Delete complete square line
-        private void deleteLine(int row)
+        private void DeleteLine(int row)
         {
             // Delete complete line
-            for(int i=0;i<tetrisGrid.ColumnDefinitions.Count;i++)
-            {               
-                Rectangle square;
+            for(var i=0;i<tetrisGrid.ColumnDefinitions.Count;i++)
+            {
                 try
                 {
-                    square = (Rectangle)tetrisGrid.Children
-                   .Cast<UIElement>()
-                   .FirstOrDefault(e => Grid.GetRow(e) == row && Grid.GetColumn(e) == i);
+                    var square = (Rectangle)tetrisGrid.Children
+                        .Cast<UIElement>()
+                        .FirstOrDefault(e => Grid.GetRow(e) == row && Grid.GetColumn(e) == i);
                     tetrisGrid.Children.Remove(square);
                 }
-                catch { }
-                
+                catch
+                {
+                    // ignored
+                }
             }
             // Move down the rest shape
             foreach (UIElement element in tetrisGrid.Children)
             {
-                Rectangle square = (Rectangle)element;
-                if(square.Name.IndexOf("arrived")==0 && Grid.GetRow(square)<=row)
+                var square = (Rectangle)element;
+                if(square.Name.IndexOf("arrived", StringComparison.Ordinal)==0 && Grid.GetRow(square)<=row)
                 {
                   Grid.SetRow(square, Grid.GetRow(square) + 1);
                 }
             }
         }
         // Get the score
-        private int getScore()
+        private int AddScore()
         {
-            gameScore += 50 * gameLevel;
-            return gameScore;
+            _gameScore += 50 * _gameLevel;
+            return _gameScore;
         }
 
         // Some reset
-        private void reset()
+        private void Reset()
         {
-            downPos = 0;
-            leftPos = 3;
-            isRotated = false;
-            rotation = 0;
-            currentShapeNumber = nextShapeNumber;
-            if (!isGameOver) { addShape(currentShapeNumber, leftPos); }
-            nextShapeDrawed = false;
-            shapeRandom = new Random();
-            nextShapeNumber = shapeRandom.Next(1, 8);
-            bottomCollided = false;
-            leftCollided = false;
-            rightCollided = false;
+            _downPos = 0;
+            _leftPos = 3;
+            _isRotated = false;
+            _rotation = 0;
+            _currentShapeNumber = _nextShapeNumber;
+            if (!_isGameOver) { AddShape(_currentShapeNumber, _leftPos); }
+            _nextShapeDrawed = false;
+            _shapeRandom = new Random();
+            _nextShapeNumber = _shapeRandom.Next(1, 8);
+            _bottomCollided = false;
+            _leftCollided = false;
+            _rightCollided = false;
         }
         // The game over reset
-        private void gameOver()
+        private void GameOver()
         {         
-          isGameOver = true;
-          reset();
+          _isGameOver = true;
+          Reset();
           startStopBtn.Content = "Start Game";
           GameOverTxt.Visibility = Visibility.Visible;
-          rowCount = 0;
-          columnCount = 0;
-          leftPos = 0;
-          gameSpeedCounter = 0;
-          gameSpeed = GAMESPEED;
-          gameLevel = 1;
-          gameActive = false;
-          gameScore = 0;
-          nextShapeDrawed = false;
-          currentTetromino = null;
-          currentShapeNumber = shapeRandom.Next(1, 8);
-          nextShapeNumber = shapeRandom.Next(1, 8);
-          timer.Interval = new TimeSpan(0, 0, 0, 0, gameSpeed);
+          _rowCount = 0;
+          _columnCount = 0;
+          _leftPos = 0;
+          _gameSpeedCounter = 0;
+          _gameSpeed = Gamespeed;
+          _gameLevel = 1;
+          _gameActive = false;
+          _gameScore = 0;
+          _nextShapeDrawed = false;
+          _currentShape = null;
+          _currentShapeNumber = _shapeRandom.Next(1, 8);
+          _nextShapeNumber = _shapeRandom.Next(1, 8);
+          _timer.Interval = new TimeSpan(0, 0, 0, 0, _gameSpeed);
          
         }
         
 
         // Remove shape from grid   
-        private void removeShape()
+        private void RemoveShape()
         {
-            int index = 0; 
+            var index = 0; 
             while (index<tetrisGrid.Children.Count)
             {             
-                UIElement element =  tetrisGrid.Children[index];
-                if (element is Rectangle)
+                var element =  tetrisGrid.Children[index];
+                if (element is Rectangle square)
                 {
-                    Rectangle square = (Rectangle)element;
-                    if (square.Name.IndexOf("moving_") == 0)
+                    if (square.Name.IndexOf("moving_", StringComparison.Ordinal) == 0)
                     {
-                        tetrisGrid.Children.Remove(element);
+                        tetrisGrid.Children.Remove(square);
                         index = -1;
                     } 
                 } 
@@ -621,43 +629,51 @@ namespace Tetris
         }
 
         // Created the basic square for tetris shape
-        private Rectangle getBasicSquare(Color rectColor)
+        private Rectangle GetBasicSquare(Color rectColor)
         {
-            Rectangle rectangle=new Rectangle();
-            rectangle.Width = 25;
-            rectangle.Height = 25;
-            rectangle.StrokeThickness = 1;
-            rectangle.Stroke = Brushes.White;
-            rectangle.Fill = getGradientColor(rectColor);
+            var rectangle = new Rectangle
+            {
+                Width = 25,
+                Height = 25,
+                StrokeThickness = 1,
+                Stroke = Brushes.White,
+                Fill = GetGradientColor(rectColor)
+            };
             return rectangle;
         }
 
         // Get the gradient color for basic square
-        private LinearGradientBrush getGradientColor( Color clr)
-        {         
-            LinearGradientBrush gradientColor = new LinearGradientBrush();
-            gradientColor.StartPoint = new Point(0, 0);
-            gradientColor.EndPoint = new Point(1, 1.5);
-            GradientStop black = new GradientStop();
-            black.Color = Colors.Black;
-            black.Offset = -1.5;
+        private static LinearGradientBrush GetGradientColor( Color clr)
+        {
+            var gradientColor = new LinearGradientBrush
+            {
+                StartPoint = new Point(0, 0),
+                EndPoint = new Point(1, 1.5)
+            };
+            var black = new GradientStop
+            {
+                Color = Colors.Black,
+                Offset = -1.5
+            };
             gradientColor.GradientStops.Add(black);
-            GradientStop other = new GradientStop();
-            other.Color = clr;
-            other.Offset = 0.70;
+            var other = new GradientStop
+            {
+                Color = clr,
+                Offset = 0.70
+            };
             gradientColor.GradientStops.Add(other);
             return gradientColor;
         }
 
         // Access variable by string name
-        private int[,] getVariableByString(string variable)
+        private int[,] GetVariableByString(string variable)
         {
-            return (int[,])this.GetType().GetField(variable).GetValue(this);
+            return (int[,])GetType().GetField(variable).GetValue(this);
         }
         // Play sound. index=0 is for collided.wav and index=1 for deleteLine.wav
-        private void playSound(int index)
+        private void PlaySound(int index)
         {
-         soundList[index].Play();
+         _soundList[index].Play();
         }
 
     
